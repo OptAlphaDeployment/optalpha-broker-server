@@ -1,0 +1,10 @@
+FROM  python:3.9.7-buster
+WORKDIR /app
+RUN pip install git+https://github.com/Kotak-Neo/kotak-neo-api.git#egg=neo_api_client
+COPY ./requirements.txt /app
+COPY ./NorenRestApi-0.0.30-py2.py3-none-any.whl /app
+RUN pip install NorenRestApi-0.0.30-py2.py3-none-any.whl
+RUN pip install -r requirements.txt
+COPY ./ /app
+EXPOSE 7777
+CMD uvicorn Broker_API:app --host 0.0.0.0 --port 7777
