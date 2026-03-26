@@ -21,7 +21,7 @@ class BrokerAuthInit(ABC):
         self.users_session = ''
 
         self._host_ = os.getenv('host')
-        self._port_postgres_ = os.getenv('port_postgres')
+        self._port_postgres_ = int(os.getenv('port_postgres'))
         self._username_ = os.getenv('username')
         self._password_ = os.getenv('password')
 
@@ -44,6 +44,8 @@ class BrokerAuthInit(ABC):
             self.logger.addHandler(self.file_handler)
 
         self.bot =  telegram.bot.Bot(os.getenv('token'))
+        try: self.chat_id = int(os.getenv('chat_id'))
+        except: self.chat_id = os.getenv('chat_id')
 
         self.all = pd.read_csv('/app/BrokerData/Stocks/all.csv').name.to_list()
         self.index_ = ['BANKNIFTY', 'NIFTY', 'MIDCPNIFTY']
@@ -177,7 +179,7 @@ class BrokerAuthInit(ABC):
         self.users_session.commit()
 
     def print_to_chat(self, username:str, msg:str) -> None:
-        try: self.bot.send_message(-4277972318, username + ': ' + msg)
+        try: self.bot.send_message(self.chat_id, username + ': ' + msg)
         except: self.logger.error('Unable to send chat to telegram')
 
     def get_data_structures(self, str_data_structure:str) -> Any:
