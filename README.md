@@ -2,7 +2,7 @@
 
 A **FastAPI-based multi-broker trading server** that provides a unified REST API for interacting with multiple Indian stock brokers. The server abstracts away broker-specific implementations, enabling clients to place orders, view positions, manage portfolios, and more through a single consistent interface.
 
-**Version:** 3.0 &nbsp;|&nbsp; **Python:** 3.9 &nbsp;|&nbsp; **Framework:** FastAPI + Uvicorn
+**Version:** 0.1 &nbsp;|&nbsp; **Python:** 3.9 &nbsp;|&nbsp; **Framework:** FastAPI + Uvicorn
 
 ---
 
