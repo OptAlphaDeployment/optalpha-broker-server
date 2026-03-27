@@ -43,7 +43,8 @@ class BrokerAuthInit(ABC):
             self.logger.addHandler(self.console_handler)
             self.logger.addHandler(self.file_handler)
 
-        self.bot =  telegram.bot.Bot(os.getenv('token'))
+        try: self.bot =  telegram.bot.Bot(os.getenv('token'))
+        except: self.bot = None
         try: self.chat_id = int(os.getenv('chat_id'))
         except: self.chat_id = os.getenv('chat_id')
 
