@@ -13,8 +13,8 @@ from NorenRestApiPy.NorenApi import NorenApi
 
 class ShoonyaApiPy(NorenApi):
     def __init__(self):
-        NorenApi.__init__(self, host='https://api.shoonya.com/NorenWClientTP/',
-                          websocket='wss://api.shoonya.com/NorenWSTP/')
+        NorenApi.__init__(self, host='https://api.shoonya.com/NorenWClientAPI/',
+                          websocket='wss://api.shoonya.com/NorenWSAPI/')
 
 class ShoonyaAuthInit(BrokerAuthInit):
     def __init__(self) -> None:
