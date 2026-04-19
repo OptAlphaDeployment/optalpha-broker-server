@@ -171,13 +171,7 @@ def orders_api(orders_args: dict = Body(...)):
 @app.post("/order_update_time")
 def order_update_time_api(order_update_time_args: dict = Body(...)):
     try:
-        broker = aai.get_data_structures(aai.red.get(order_update_time_args['username']))['file']['broker']
-        if broker == 'angel':
-            order_update_time = aord.get_order_update_time(order_update_time_args['username'])
-        if broker == 'kotakneo':
-            order_update_time = kord.get_order_update_time(order_update_time_args['username'])
-        if broker == 'shoonya':
-            order_update_time = sord.get_order_update_time(order_update_time_args['username'])
+        order_update_time = aord.get_order_update_time(order_update_time_args['username'])
         return {'order_update_time':order_update_time, 'error': ''}
     except Exception as e:
         print(str(e))
@@ -203,13 +197,7 @@ def positions_api(positions_args: dict = Body(...)):
 @app.post("/position_update_time")
 def position_update_time_api(position_update_time_args: dict = Body(...)):
     try:
-        broker = aai.get_data_structures(aai.red.get(position_update_time_args['username']))['file']['broker']
-        if broker == 'angel':
-            position_update_time = apos.get_position_update_time(position_update_time_args['username'])
-        if broker == 'kotakneo':
-            position_update_time = kpos.get_position_update_time(position_update_time_args['username'])
-        if broker == 'shoonya':
-            position_update_time = spos.get_position_update_time(position_update_time_args['username'])
+        position_update_time = apos.get_position_update_time(position_update_time_args['username'])
         return {'position_update_time':position_update_time, 'error': ''}
     except Exception as e:
         print(str(e))
@@ -248,18 +236,9 @@ def get_available_cash_api(get_available_cash_args: dict = Body(...)):
         return {'available_cash':'', 'error': str(e)}
 
 @app.post("/get_required_margin")
-def get_required_margin_api(get_required_margin_args: dict = Body(...)):
+def get_required_margin_api(get_required_margin_args: list = Body(...)):
     try:
-        broker = aai.get_data_structures(aai.red.get(get_required_margin_args['username']))['file']['broker']
-        if broker == 'angel':
-            required_margin = atrade.get_required_margin(username=get_required_margin_args['username'], transaction_type=get_required_margin_args['transaction_type'], 
-                                token=get_required_margin_args['token'], price_=get_required_margin_args['price_'], product=get_required_margin_args['product'])
-        if broker == 'kotakneo':
-            required_margin = ktrade.get_required_margin(username=get_required_margin_args['username'], transaction_type=get_required_margin_args['transaction_type'], 
-                                token=get_required_margin_args['token'], price_=get_required_margin_args['price_'], product=get_required_margin_args['product'])
-        if broker == 'shoonya':
-            required_margin = strade.get_required_margin(username=get_required_margin_args['username'], transaction_type=get_required_margin_args['transaction_type'], 
-                                token=get_required_margin_args['token'], price_=get_required_margin_args['price_'], product=get_required_margin_args['product'])
+        required_margin = atrade.get_required_margin(instruments = get_required_margin_args)
         return {'required_margin':required_margin, 'error': ''}
     except Exception as e:
         print(str(e))

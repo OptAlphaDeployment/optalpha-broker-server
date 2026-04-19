@@ -56,19 +56,19 @@ class ShoonyaTrade(BrokerTrade):
                 if i >= self.broker_auth_init.try_fin:
                     raise Exception("The error in SHOONYA-get_available_cash is", e)
 
-    def get_required_margin(self, username:str, transaction_type:str, token:str, price_:float, product:str = '') -> float:
-        _nam_, _exp_, _strk_, _typ_, _lot_ = self.broker_auth_init.get_name(token)
-        _exp_ = datetime.datetime.strptime(_exp_, "%d%b%y").strftime("%d-%m-%Y")
-        transaction_type = 'buy' if transaction_type == "BUY" else 'sell'
-        if _typ_ == "":
-            return self.get_quote(username, token=token).ltp.iloc[0]
-        elif _typ_ == "FUT":
-            url = f"https://margin.truedata.in/api/getfuturemargin?symbol={_nam_}&expiry={_exp_}&buysell={transaction_type}&response=json"
-        else:
-            _strk_ = float(_strk_)
-            url = f"https://margin.truedata.in/api/getoptionmargin?symbol={_nam_}&expiry={_exp_}&strike={_strk_}&series={_typ_}&buysell={transaction_type}&response=json"
-        res = requests.get(url).json()
-        return float(res['span']) + float(res['exposure'])
+    # def get_required_margin(self, username:str, transaction_type:str, token:str, price_:float, product:str = '') -> float:
+    #     _nam_, _exp_, _strk_, _typ_, _lot_ = self.broker_auth_init.get_name(token)
+    #     _exp_ = datetime.datetime.strptime(_exp_, "%d%b%y").strftime("%d-%m-%Y")
+    #     transaction_type = 'buy' if transaction_type == "BUY" else 'sell'
+    #     if _typ_ == "":
+    #         return self.get_quote(username, token=token).ltp.iloc[0]
+    #     elif _typ_ == "FUT":
+    #         url = f"https://margin.truedata.in/api/getfuturemargin?symbol={_nam_}&expiry={_exp_}&buysell={transaction_type}&response=json"
+    #     else:
+    #         _strk_ = float(_strk_)
+    #         url = f"https://margin.truedata.in/api/getoptionmargin?symbol={_nam_}&expiry={_exp_}&strike={_strk_}&series={_typ_}&buysell={transaction_type}&response=json"
+    #     res = requests.get(url).json()
+    #     return float(res['span']) + float(res['exposure'])
 
     def get_quote(self, username:str, token:str = '', name:str = '', exchange:str = 'NSE', expiry:str = '', strike:str = '', optionType:str = '') -> pd.DataFrame:
         ''' Return ltp, open and last_traded_time (is still pending) of given token or (name+exchange+expiry+strike+optionType) in a dataframe.

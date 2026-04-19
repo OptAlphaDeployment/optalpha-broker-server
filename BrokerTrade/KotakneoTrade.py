@@ -61,69 +61,69 @@ class KotakneoTrade(BrokerTrade):
                 if i >= self.broker_auth_init.try_fin:
                     raise Exception('The error in KOTAKNEO-get_available_cash is', e)
 
-    def get_required_margin(self, username:str, transaction_type:str, token:str, price_:float, product:str = '') -> float:
-        ''' Return required_margin
+    # def get_required_margin(self, username:str, transaction_type:str, token:str, price_:float, product:str = '') -> float:
+    #     ''' Return required_margin
 
-            Parameters
-            ----------
-            transaction_type: str
-                'BUY'/'SELL'
-            token: str
-                unique identifier of an item in angel
-                If token is given, all other items are not needed
-            price_: float
-                price
-            product: str
-                'MARGIN' / 'INTRADAY' / ''
+    #         Parameters
+    #         ----------
+    #         transaction_type: str
+    #             'BUY'/'SELL'
+    #         token: str
+    #             unique identifier of an item in angel
+    #             If token is given, all other items are not needed
+    #         price_: float
+    #             price
+    #         product: str
+    #             'MARGIN' / 'INTRADAY' / ''
 
-            Returns
-            -------
-            required_margin: float
-        '''
-        try:
-            user_data = self.broker_auth_init.red.get(username)
-            user_data = self.broker_auth_init.get_data_structures(user_data)
-        except Exception as e:
-            self.broker_auth_init.logger.error(username + ': The error in KOTAKNEO-get_required_margin auth is ' + str(e))
-            raise Exception("The error in KOTAKNEO-get_required_margin auth is", e)
+    #         Returns
+    #         -------
+    #         required_margin: float
+    #     '''
+    #     try:
+    #         user_data = self.broker_auth_init.red.get(username)
+    #         user_data = self.broker_auth_init.get_data_structures(user_data)
+    #     except Exception as e:
+    #         self.broker_auth_init.logger.error(username + ': The error in KOTAKNEO-get_required_margin auth is ' + str(e))
+    #         raise Exception("The error in KOTAKNEO-get_required_margin auth is", e)
 
-        i = 0
-        while True:
-            try:
-                _nam_, _exp_, _strk_, _typ_, _lot_ = self.broker_auth_init.get_name(token)
-                token_ = self.broker_auth_init.token_symbol_mapping[self.broker_auth_init.token_symbol_mapping.instrumentToken == token].instrumentToken_.iloc[0]
+    #     i = 0
+    #     while True:
+    #         try:
+    #             _nam_, _exp_, _strk_, _typ_, _lot_ = self.broker_auth_init.get_name(token)
+    #             token_ = self.broker_auth_init.token_symbol_mapping[self.broker_auth_init.token_symbol_mapping.instrumentToken == token].instrumentToken_.iloc[0]
 
-                prod = "CNC" if _exp_ == "" else "NRML"
-                if product == 'INTRADAY': prod = "MIS"
+    #             prod = "CNC" if _exp_ == "" else "NRML"
+    #             if product == 'INTRADAY': prod = "MIS"
 
-                headers = {
-                    'Auth': user_data['auth']['token'],
-                    'sid': user_data['auth']['sid'],
-                    'neo-fin-key': 'neotradeapi'
-                }
-                cash_data = { "brkName": "Kotak",
-                            "brnchId": "ONLINE",
-                            "exSeg": "nse_cm" if _exp_ == "" else "nse_fo",
-                            "prc": str(price_),
-                            "prcTp": "L",
-                            "prod": prod,
-                            "qty": "1" if _lot_ == "" else str(_lot_),
-                            "tok": str(token_),
-                            "trnsTp": "S" if transaction_type == "SELL" else "B"
-                            }
-                cash_data = json.dumps(cash_data)
-                cash_data = urllib.parse.quote(cash_data)
-                cash_data = f"jData={cash_data}"
+    #             headers = {
+    #                 'Auth': user_data['auth']['token'],
+    #                 'sid': user_data['auth']['sid'],
+    #                 'neo-fin-key': 'neotradeapi'
+    #             }
+    #             cash_data = { "brkName": "Kotak",
+    #                         "brnchId": "ONLINE",
+    #                         "exSeg": "nse_cm" if _exp_ == "" else "nse_fo",
+    #                         "prc": str(price_),
+    #                         "prcTp": "L",
+    #                         "prod": prod,
+    #                         "qty": "1" if _lot_ == "" else str(_lot_),
+    #                         "tok": str(token_),
+    #                         "trnsTp": "S" if transaction_type == "SELL" else "B"
+    #                         }
+    #             cash_data = json.dumps(cash_data)
+    #             cash_data = urllib.parse.quote(cash_data)
+    #             cash_data = f"jData={cash_data}"
 
-                cash = requests.post(user_data['auth']["base_url"] + f'/quick/user/check-margin', headers=headers, data=cash_data).json()
-                return float(cash['ordMrgn'])
-            except Exception as e:
-                self.broker_auth_init.logger.error(username + ': The error in KOTAKNEO-get_required_margin is ' + str(e) + ' Retrying..... ' + str(i))
-                time.sleep(1)
-                if i==5: user_data = self.broker_auth_init.login(user_data['file'])
-                i=i+1
-                if i >= self.broker_auth_init.try_fin:
-                    raise Exception('The error in KOTAKNEO-get_required_margin is', e)
+    #             cash = requests.post(user_data['auth']["base_url"] + f'/quick/user/check-margin', headers=headers, data=cash_data).json()
+    #             return float(cash['ordMrgn'])
+    #         except Exception as e:
+    #             self.broker_auth_init.logger.error(username + ': The error in KOTAKNEO-get_required_margin is ' + str(e) + ' Retrying..... ' + str(i))
+    #             time.sleep(1)
+    #             if i==5: user_data = self.broker_auth_init.login(user_data['file'])
+    #             i=i+1
+    #             if i >= self.broker_auth_init.try_fin:
+    #                 raise Exception('The error in KOTAKNEO-get_required_margin is', e)
 
     def get_quote(self, username:str, token:str = '', name:str = '', exchange:str = 'NSE', expiry:str = '', strike:str = '', optionType:str = '') -> pd.DataFrame:
         ''' Return ltp, open and last_traded_time of given token or (name+exchange+expiry+strike+optionType) in a dataframe.

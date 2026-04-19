@@ -44,69 +44,69 @@ class AngelTrade(BrokerTrade):
                 if i >= self.broker_auth_init.try_fin:
                     raise Exception("The error in ANGEL-get_available_cash is", e)
 
-    def get_required_margin(self, username:str, transaction_type:str, token:str, price_:float, product:str = '') -> float:
-        ''' Return required_margin
+    # def get_required_margin(self, username:str, transaction_type:str, token:str, price_:float, product:str = '') -> float:
+    #     ''' Return required_margin
 
-            Parameters
-            ----------
-            transaction_type: str
-                'BUY'/'SELL'
-            token: str
-                unique identifier of an item in angel
-                If token is given, all other items are not needed
-            price_: float
-                price
-            product: str
-                'MARGIN' / 'INTRADAY' / ''
+    #         Parameters
+    #         ----------
+    #         transaction_type: str
+    #             'BUY'/'SELL'
+    #         token: str
+    #             unique identifier of an item in angel
+    #             If token is given, all other items are not needed
+    #         price_: float
+    #             price
+    #         product: str
+    #             'MARGIN' / 'INTRADAY' / ''
 
-            Returns
-            -------
-            required_margin: float
-        '''
-        try:
-            user_data = self.broker_auth_init.red.get(username)
-            user_data = self.broker_auth_init.get_data_structures(user_data)
-            broker_obj = SmartConnect(api_key=user_data['auth']['api_key'])
-            broker_obj.access_token = user_data['auth']['access_token']
-            broker_obj.feed_token = user_data['auth']['feed_token']
-            broker_obj.refresh_token = user_data['auth']['refresh_token']
-            broker_obj.userId = user_data['auth']['userId']
-        except Exception as e:
-            self.broker_auth_init.logger.error(username + ': The error in ANGEL-get_required_margin auth is ' + str(e))
-            raise Exception("The error in ANGEL-get_required_margin auth is", e)
+    #         Returns
+    #         -------
+    #         required_margin: float
+    #     '''
+    #     try:
+    #         user_data = self.broker_auth_init.red.get(username)
+    #         user_data = self.broker_auth_init.get_data_structures(user_data)
+    #         broker_obj = SmartConnect(api_key=user_data['auth']['api_key'])
+    #         broker_obj.access_token = user_data['auth']['access_token']
+    #         broker_obj.feed_token = user_data['auth']['feed_token']
+    #         broker_obj.refresh_token = user_data['auth']['refresh_token']
+    #         broker_obj.userId = user_data['auth']['userId']
+    #     except Exception as e:
+    #         self.broker_auth_init.logger.error(username + ': The error in ANGEL-get_required_margin auth is ' + str(e))
+    #         raise Exception("The error in ANGEL-get_required_margin auth is", e)
 
-        i = 0
-        while True:
-            try:
-                _nam_, _exp_, _strk_, _typ_, _lot_ = self.broker_auth_init.get_name(token)
-                symbol = self.broker_auth_init.token_symbol_mapping[self.broker_auth_init.token_symbol_mapping.token==str(token)].symbol.iloc[0]
-                exchange = 'NSE' if (symbol[-3:] == '-EQ') or (symbol in self.broker_auth_init.index_) else 'NFO'
-                producttype = 'CARRYFORWARD' if exchange=='NFO' else 'DELIVERY'
+    #     i = 0
+    #     while True:
+    #         try:
+    #             _nam_, _exp_, _strk_, _typ_, _lot_ = self.broker_auth_init.get_name(token)
+    #             symbol = self.broker_auth_init.token_symbol_mapping[self.broker_auth_init.token_symbol_mapping.token==str(token)].symbol.iloc[0]
+    #             exchange = 'NSE' if (symbol[-3:] == '-EQ') or (symbol in self.broker_auth_init.index_) else 'NFO'
+    #             producttype = 'CARRYFORWARD' if exchange=='NFO' else 'DELIVERY'
 
-                if product == 'MARGIN': producttype = 'MARGIN'
-                elif product == 'INTRADAY': producttype = 'INTRADAY'
+    #             if product == 'MARGIN': producttype = 'MARGIN'
+    #             elif product == 'INTRADAY': producttype = 'INTRADAY'
 
-                margin = broker_obj.getMarginApi({
-                    "positions": [
-                            {
-                                "exchange": exchange,
-                                "qty": 1 if _lot_ == "" else int(_lot_),
-                                "price": price_,
-                                "productType": producttype,
-                                "token": token,
-                                "tradeType": transaction_type
-                            }
-                        ]
-                    })
+    #             margin = broker_obj.getMarginApi({
+    #                 "positions": [
+    #                         {
+    #                             "exchange": exchange,
+    #                             "qty": 1 if _lot_ == "" else int(_lot_),
+    #                             "price": price_,
+    #                             "productType": producttype,
+    #                             "token": token,
+    #                             "tradeType": transaction_type
+    #                         }
+    #                     ]
+    #                 })
 
-                return float(margin['data']['totalMarginRequired'])
-            except Exception as e:
-                self.broker_auth_init.logger.error(username + ': The error in ANGEL-get_required_margin is ' + str(e) + ' Retrying..... ' + str(i))
-                time.sleep(1)
-                if i==5: broker_obj = self.broker_auth_init.login(user_data['file'])
-                i=i+1
-                if i >= self.broker_auth_init.try_fin:
-                    raise Exception("The error in ANGEL-get_required_margin is", e)
+    #             return float(margin['data']['totalMarginRequired'])
+    #         except Exception as e:
+    #             self.broker_auth_init.logger.error(username + ': The error in ANGEL-get_required_margin is ' + str(e) + ' Retrying..... ' + str(i))
+    #             time.sleep(1)
+    #             if i==5: broker_obj = self.broker_auth_init.login(user_data['file'])
+    #             i=i+1
+    #             if i >= self.broker_auth_init.try_fin:
+    #                 raise Exception("The error in ANGEL-get_required_margin is", e)
 
     def get_quote(self, username:str, token:str = '', name:str = '', exchange:str = 'NSE', expiry:str = '', strike:str = '', optionType:str = '') -> pd.DataFrame:
         ''' Return ltp, open and last_traded_time (is still pending) of given token or (name+exchange+expiry+strike+optionType) in a dataframe.
