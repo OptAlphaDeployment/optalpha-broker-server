@@ -44,5 +44,5 @@ class BrokerTrade(ABC):
             "strike": float(d[3]) if d[3] else 0,
             "series": d[4],
             "type": item['transaction_type'].lower(),
-            "qty": item['lots']
+            "qty": int(item['lots']/item['lot_size'])
         }
