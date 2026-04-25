@@ -17,8 +17,6 @@ class BrokerAuthInit(ABC):
         self.tokens_df = 0
         self.token_symbol_mapping = 0
         self.try_fin = 10
-        self.postgres_cluster_users = ''
-        self.users_session = ''
 
         self._host_ = os.getenv('host')
         self._port_postgres_ = int(os.getenv('port_postgres'))
@@ -42,6 +40,16 @@ class BrokerAuthInit(ABC):
 
             self.logger.addHandler(self.console_handler)
             self.logger.addHandler(self.file_handler)
+
+        try:
+            self.postgres_cluster_users = create_engine(
+                f'postgresql+psycopg2://{self._username_}:%s@{self._host_}:{self._port_postgres_}/users' % quote(self._password_),
+                pool_recycle=3600,
+                pool_size=10,
+                max_overflow=20
+            )
+        except Exception as e:
+            self.logger.error('Unable to connect to postgres engine: ' + str(e))
 
         try: self.bot =  telegram.bot.Bot(os.getenv('token'))
         except: self.bot = None
@@ -140,44 +148,29 @@ class BrokerAuthInit(ABC):
         correction = 0.5 if n >= 0 else -0.5
         return round(int( n/precision+correction ) * precision, 2)
 
-    def connect_to_postgres_db(self) -> None:
-        self.logger.debug('Connecting to POSTGRES DB')
-        while True:
-            try:
-                self.postgres_cluster_users = create_engine(f'postgresql+psycopg2://{self._username_}:%s@{self._host_}:{self._port_postgres_}/users'  % quote(self._password_), pool_recycle=3600)
-                self.users_session = self.postgres_cluster_users.connect()
-                break
-            except Exception as e: 
-                self.logger.debug(str(e) + ' Unable to connect to underlying postgres, retrying...')
-                time.sleep(1)
-        self.logger.debug('Connected to POSTGRES DB')
-
-    def close_postgres_db(self) -> None:
-        try:
-            self.logger.debug('Disconnecting to POSTGRES DB')
-            self.users_session.close()
-            self.postgres_cluster_users.dispose()
-            self.logger.debug('Disconnected to POSTGRES DB')
-        except Exception as e: self.logger.debug(str(e) + ' Unable to close to underlying postgres, retrying...')
-
     def get_all_users(self) -> pd.DataFrame:
-        return pd.read_sql(text(f"SELECT * FROM user_login_info"), self.users_session)
+        with self.postgres_cluster_users.connect() as users_session:
+            return pd.read_sql(text(f"SELECT * FROM user_login_info"), users_session)
 
     def get_user(self, username:str) -> dict:
-        file = self.users_session.execute(text(f"SELECT login_info FROM user_login_info WHERE users='{username}'")).all()[0]
-        return self.get_data_structures(file[0])
+        with self.postgres_cluster_users.connect() as users_session:
+            file = users_session.execute(text(f"SELECT login_info FROM user_login_info WHERE users='{username}'")).all()[0]
+            return self.get_data_structures(file[0])
 
     def update_user(self, username:str, file:dict) -> None:
-        self.users_session.execute(text(f"UPDATE user_login_info SET login_info=$${str(file)}$$ WHERE users='{username}'"))
-        self.users_session.commit()
+        with self.postgres_cluster_users.connect() as users_session:
+            users_session.execute(text(f"UPDATE user_login_info SET login_info=$${str(file)}$$ WHERE users='{username}'"))
+            users_session.commit()
 
     def set_user(self, username:str, file:dict) -> None:
-        self.users_session.execute(text(f"INSERT INTO user_login_info (users, login_info) VALUES ('{username}', $${str(file)}$$)"))
-        self.users_session.commit()
+        with self.postgres_cluster_users.connect() as users_session:
+            users_session.execute(text(f"INSERT INTO user_login_info (users, login_info) VALUES ('{username}', $${str(file)}$$)"))
+            users_session.commit()
 
     def delete_user(self, username:str) -> None:
-        self.users_session.execute(text(f"DELETE FROM user_login_info WHERE users='{username}'"))
-        self.users_session.commit()
+        with self.postgres_cluster_users.connect() as users_session:
+            users_session.execute(text(f"DELETE FROM user_login_info WHERE users='{username}'"))
+            users_session.commit()
 
     def print_to_chat(self, username:str, msg:str) -> None:
         try: self.bot.send_message(self.chat_id, username + ': ' + msg)

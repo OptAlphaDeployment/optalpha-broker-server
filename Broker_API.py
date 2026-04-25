@@ -82,9 +82,7 @@ def read_root():
 @app.post("/get_file")
 def get_file_api(get_file_args: dict = Body(...)):
     try:
-        aai.connect_to_postgres_db()
         file = aai.get_user(get_file_args['username'])
-        aai.close_postgres_db()
         file['username'] = get_file_args['username']
         return {'file':file, 'error': ''}
     except Exception as e:

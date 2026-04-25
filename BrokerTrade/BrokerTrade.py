@@ -18,6 +18,9 @@ class BrokerTrade(ABC):
 
         required_margin_details = requests.post("https://margin.truedata.in/api/getPortfolioMargin", json=instruments_grouped[True]).json()
 
+        # to remove when api is fixed
+        required_margin_details['totals']['totalMargin'] = required_margin_details['portfolio'][0]['legs'][0]['optLtp']*instruments[0]['lots']
+
         return required_margin_details
 
     @abstractmethod
