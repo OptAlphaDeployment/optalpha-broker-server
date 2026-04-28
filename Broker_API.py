@@ -243,7 +243,7 @@ def get_required_margin_api(get_required_margin_args: list = Body(...)):
         return {'required_margin':'', 'error': str(e)}
 
 @app.post("/get_freeze_quantity")
-def get_freeze_quantity_api(get_freeze_quantity_args: list = Body(...)):
+def get_freeze_quantity_api(get_freeze_quantity_args: dict = Body(...)):
     try:
         return {'freeze_quantity': aai.name_freeze_quantity_mapping[get_freeze_quantity_args['name']], 'error': ''}
     except Exception as e:
