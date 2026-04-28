@@ -1,3 +1,4 @@
+import io
 import os
 import time
 import redis
@@ -5,6 +6,7 @@ import logging
 import telegram
 import datetime
 import warnings
+import requests
 import numpy as np
 import pandas as pd
 from typing import Tuple, Any
@@ -42,12 +44,14 @@ class BrokerAuthInit(ABC):
             self.logger.addHandler(self.file_handler)
 
         try:
-            self.postgres_cluster_users = create_engine(
-                f'postgresql+psycopg2://{self._username_}:%s@{self._host_}:{self._port_postgres_}/users' % quote(self._password_),
-                pool_recycle=3600,
-                pool_size=10,
-                max_overflow=20
-            )
+            if self._host_ == '' or self._host_ is None: pass
+            else:
+                self.postgres_cluster_users = create_engine(
+                    f'postgresql+psycopg2://{self._username_}:%s@{self._host_}:{self._port_postgres_}/users' % quote(self._password_),
+                    pool_recycle=3600,
+                    pool_size=10,
+                    max_overflow=20
+                )
         except Exception as e:
             self.logger.error('Unable to connect to postgres engine: ' + str(e))
 
@@ -59,6 +63,12 @@ class BrokerAuthInit(ABC):
         self.all = pd.read_csv('/app/BrokerData/Stocks/all.csv').name.to_list()
         self.index_ = ['BANKNIFTY', 'NIFTY', 'MIDCPNIFTY']
         self.index_diff_ = ['NIFTY BANK', 'NIFTY 50', 'NIFTY MID SELECT']
+
+        kite_tokens = pd.read_csv('/app/Tokens/kite_tokens.csv')
+        kite_tokens = kite_tokens[['name', 'exchange', 'expiry_date', 'strike', 'instrument_type', 'freeze_quantity']]
+        kite_tokens = kite_tokens[(kite_tokens.name.isin(self.index_ + self.all)) & (kite_tokens.exchange.isin(['NSE','NFO']))]
+        kite_tokens.drop_duplicates('name', inplace=True)
+        self.name_freeze_quantity_mapping = dict(zip(kite_tokens.name, kite_tokens.freeze_quantity))
 
         warnings.filterwarnings('ignore')
 
@@ -193,6 +203,10 @@ class BrokerAuthInit(ABC):
             all = all + nifty_500
             all = list(set(all))
             all.sort()
-            pd.DataFrame(all, columns=['name']).to_csv('/app/BrokerData/Stocks/all.csv',index=False)
+            pd.DataFrame(all, columns=['name']).to_csv('/app/BrokerData/Stocks/all.csv', index=False)
+
+            res = requests.get("https://api.kite.trade/instruments.json")
+            kite_tokens = pd.read_json(io.StringIO(res.text), lines=True)
+            kite_tokens.to_csv('/app/Tokens/kite_tokens.csv', index=False)
         except Exception as e:
             print('ATTENTION: unable to get all list. Error is ' + str(e))
