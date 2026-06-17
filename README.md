@@ -10,7 +10,7 @@ A **FastAPI-based multi-broker trading server** that provides a unified REST API
 
 | Broker | Auth | Orders | Positions | Portfolio | Trading |
 |--------|------|--------|-----------|-----------|---------|
-| **Angel One** (SmartAPI) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Angel One** | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Kotak Neo** | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Shoonya** (Finvasia) | ✅ | ✅ | ✅ | ✅ | ✅ |
 
@@ -229,7 +229,6 @@ A **GitHub Actions** workflow (`.github/workflows/docker-image.yml`) automates t
 | `redis` | Session & data caching |
 | `psycopg2-binary` / `SQLAlchemy` | PostgreSQL connectivity |
 | `pandas` / `numpy` | Data manipulation |
-| `smartapi-python` | Angel One broker SDK |
 | `neo_api_client` | Kotak Neo broker SDK |
 | `NorenRestApi` | Shoonya (Finvasia) broker SDK |
 | `python-telegram-bot` | Telegram notifications |

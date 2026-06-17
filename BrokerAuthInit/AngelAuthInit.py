@@ -2,12 +2,14 @@ import ssl
 import time
 import json
 import pyotp
+import requests
 import numpy as np
 import pandas as pd
 import urllib.request
 from typing import Any
-from SmartApi import SmartConnect
 from BrokerAuthInit import BrokerAuthInit
+
+ANGEL_BASE_URL = 'https://apiconnect.angelone.in'
 
 class AngelAuthInit(BrokerAuthInit):
     def __init__(self) -> None:
@@ -29,23 +31,37 @@ class AngelAuthInit(BrokerAuthInit):
         '''
         for tries in range(self.try_fin): # Trying to login until successful
             try:
-                broker_obj = SmartConnect(api_key=file["angel_api_k"])
-                time.sleep(1)
                 totp = pyotp.TOTP(file["otp_key"])
-                data = broker_obj.generateSession(file["angel_user_id"], file["pin"], str(totp.now()))
-                time.sleep(1)
-                if verbose: self.logger.info('Angel Login Successsful: ' + data['data']['name'])
+                headers = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-UserType': 'USER',
+                    'X-SourceID': 'WEB',
+                    'X-PrivateKey': file["angel_api_k"],
+                    'X-MACAddress': '00:00:00:00:00:00'
+                }
+                data = {
+                    "clientcode": file["angel_user_id"],
+                    "password": file["pin"],
+                    "totp": str(totp.now())
+                }
+                resp = requests.post(ANGEL_BASE_URL + '/rest/auth/angelbroking/user/v1/loginByPassword', json=data, headers=headers).json()
+
+                if not resp.get('status'):
+                    raise Exception(resp.get('message', 'Login failed'))
+
+                if verbose: self.logger.info('Angel Login Successsful: ' + file['username'])
                 user_data = {
                     'username': file['username'],
                     'file': file,
-                    'auth': {'api_key': broker_obj.api_key,
-                             'access_token': broker_obj.access_token,
-                             'feed_token': broker_obj.feed_token,
-                             'refresh_token': broker_obj.refresh_token,
-                             'userId': broker_obj.userId}
+                    'auth': {'api_key': file["angel_api_k"],
+                             'access_token': resp['data']['jwtToken'],
+                             'feed_token': resp['data']['feedToken'],
+                             'refresh_token': resp['data']['refreshToken'],
+                             'userId': file["angel_user_id"]}
                 }
                 self.red.set(file['username'], str(user_data))
-                return broker_obj
+                return user_data
             except Exception as e:
                 self.logger.error(file['username'] + ': ATTENTION: The error in ANGEL-login is ' + str(e) + ' Retrying.....')
                 self.print_to_chat(file['username'], 'ATTENTION: The error in ANGEL-login is ' + str(e) + ' Retrying.....')

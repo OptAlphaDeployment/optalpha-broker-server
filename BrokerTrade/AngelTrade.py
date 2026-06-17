@@ -1,11 +1,13 @@
 from BrokerAuthInit import BrokerAuthInit
 from BrokerTrade import BrokerTrade
-from SmartApi import SmartConnect
 from BrokerOrd import BrokerOrd
 from typing import Union
 import pandas as pd
 import datetime
+import requests
 import time
+
+ANGEL_BASE_URL = 'https://apiconnect.angelone.in'
 
 class AngelTrade(BrokerTrade):
     def __init__(self, broker_auth_init:BrokerAuthInit, broker_ord:BrokerOrd) -> None:
@@ -23,11 +25,6 @@ class AngelTrade(BrokerTrade):
         try:
             user_data = self.broker_auth_init.red.get(username)
             user_data = self.broker_auth_init.get_data_structures(user_data)
-            broker_obj = SmartConnect(api_key=user_data['auth']['api_key'])
-            broker_obj.access_token = user_data['auth']['access_token']
-            broker_obj.feed_token = user_data['auth']['feed_token']
-            broker_obj.refresh_token = user_data['auth']['refresh_token']
-            broker_obj.userId = user_data['auth']['userId']
         except Exception as e:
             self.broker_auth_init.logger.error(username + ': The error in ANGEL-get_available_cash auth is ' + str(e))
             raise Exception("The error in ANGEL-get_available_cash auth is", e)
@@ -35,11 +32,21 @@ class AngelTrade(BrokerTrade):
         i = 0
         while True:
             try:
-                return float(broker_obj.rmsLimit()['data']['availablecash'])
+                headers = {
+                    'Authorization': 'Bearer ' + user_data['auth']['access_token'],
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-UserType': 'USER',
+                    'X-SourceID': 'WEB',
+                    'X-MACAddress': '00:00:00:00:00:00',
+                    'X-PrivateKey': user_data['auth']['api_key']
+                }
+                resp = requests.get(ANGEL_BASE_URL + '/rest/secure/angelbroking/user/v1/getRMS', headers=headers).json()
+                return float(resp['data']['availablecash'])
             except Exception as e:
                 self.broker_auth_init.logger.error(username + ': The error in ANGEL-get_available_cash is ' + str(e) + ' Retrying..... ' + str(i))
                 time.sleep(1)
-                if i==5: broker_obj = self.broker_auth_init.login(user_data['file'])
+                if i==5: user_data = self.broker_auth_init.login(user_data['file'])
                 i=i+1
                 if i >= self.broker_auth_init.try_fin:
                     raise Exception("The error in ANGEL-get_available_cash is", e)
@@ -66,11 +73,6 @@ class AngelTrade(BrokerTrade):
     #     try:
     #         user_data = self.broker_auth_init.red.get(username)
     #         user_data = self.broker_auth_init.get_data_structures(user_data)
-    #         broker_obj = SmartConnect(api_key=user_data['auth']['api_key'])
-    #         broker_obj.access_token = user_data['auth']['access_token']
-    #         broker_obj.feed_token = user_data['auth']['feed_token']
-    #         broker_obj.refresh_token = user_data['auth']['refresh_token']
-    #         broker_obj.userId = user_data['auth']['userId']
     #     except Exception as e:
     #         self.broker_auth_init.logger.error(username + ': The error in ANGEL-get_required_margin auth is ' + str(e))
     #         raise Exception("The error in ANGEL-get_required_margin auth is", e)
@@ -86,7 +88,16 @@ class AngelTrade(BrokerTrade):
     #             if product == 'MARGIN': producttype = 'MARGIN'
     #             elif product == 'INTRADAY': producttype = 'INTRADAY'
 
-    #             margin = broker_obj.getMarginApi({
+    #             headers = {
+    #                 'Authorization': 'Bearer ' + user_data['auth']['access_token'],
+    #                 'Content-Type': 'application/json',
+    #                 'Accept': 'application/json',
+    #                 'X-UserType': 'USER',
+    #                 'X-SourceID': 'WEB',
+    #                 'X-MACAddress': '00:00:00:00:00:00',
+    #                 'X-PrivateKey': user_data['auth']['api_key']
+    #             }
+    #             margin_data = {
     #                 "positions": [
     #                         {
     #                             "exchange": exchange,
@@ -97,13 +108,14 @@ class AngelTrade(BrokerTrade):
     #                             "tradeType": transaction_type
     #                         }
     #                     ]
-    #                 })
+    #                 }
+    #             resp = requests.post('https://apiconnect.angelone.in/rest/secure/angelbroking/margin/v1/batch', json=margin_data, headers=headers).json()
 
-    #             return float(margin['data']['totalMarginRequired'])
+    #             return float(resp['data']['totalMarginRequired'])
     #         except Exception as e:
     #             self.broker_auth_init.logger.error(username + ': The error in ANGEL-get_required_margin is ' + str(e) + ' Retrying..... ' + str(i))
     #             time.sleep(1)
-    #             if i==5: broker_obj = self.broker_auth_init.login(user_data['file'])
+    #             if i==5: user_data = self.broker_auth_init.login(user_data['file'])
     #             i=i+1
     #             if i >= self.broker_auth_init.try_fin:
     #                 raise Exception("The error in ANGEL-get_required_margin is", e)
@@ -140,11 +152,6 @@ class AngelTrade(BrokerTrade):
         try:
             user_data = self.broker_auth_init.red.get(username)
             user_data = self.broker_auth_init.get_data_structures(user_data)
-            broker_obj = SmartConnect(api_key=user_data['auth']['api_key'])
-            broker_obj.access_token = user_data['auth']['access_token']
-            broker_obj.feed_token = user_data['auth']['feed_token']
-            broker_obj.refresh_token = user_data['auth']['refresh_token']
-            broker_obj.userId = user_data['auth']['userId']
         except Exception as e:
             self.broker_auth_init.logger.error(username + ': The error in ANGEL-get_quote auth is ' + str(e))
             raise Exception("The error in ANGEL-get_quote auth is", e)
@@ -155,21 +162,31 @@ class AngelTrade(BrokerTrade):
                 if token == '': token = self.broker_auth_init.get_token(name = name, exchange = exchange, expiry = expiry, strike = strike, optionType = optionType)
                 symbol = self.broker_auth_init.token_symbol_mapping[self.broker_auth_init.token_symbol_mapping.token==str(token)].symbol.iloc[0]
                 exchange = 'NSE' if (symbol[-3:] == '-EQ') or (symbol in self.broker_auth_init.index_) else 'NFO'
-                data = broker_obj.ltpData(exchange, symbol, token)
-                ltp_ = data['data']['ltp']
-                open_ = data['data']['open']
+                headers = {
+                    'Authorization': 'Bearer ' + user_data['auth']['access_token'],
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-UserType': 'USER',
+                    'X-SourceID': 'WEB',
+                    'X-MACAddress': '00:00:00:00:00:00',
+                    'X-PrivateKey': user_data['auth']['api_key']
+                }
+                ltp_data = {"exchange": exchange, "tradingsymbol": symbol, "symboltoken": str(token)}
+                resp = requests.post(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/getLtpData', json=ltp_data, headers=headers).json()
+                ltp_ = resp['data']['ltp']
+                open_ = resp['data']['open']
                 data = pd.DataFrame({'ltp':ltp_,  'open_price':open_, 'BD_last_traded_time':''}, index=[0])
                 return data
             except Exception as e:
                 self.broker_auth_init.logger.error(username + ': The error in ANGEL-get_quote is ' + str(e) + ' Retrying..... ' + str(i))
                 time.sleep(1)
-                if i==5: broker_obj = self.broker_auth_init.login(user_data['file'])
+                if i==5: user_data = self.broker_auth_init.login(user_data['file'])
                 i=i+1
                 if i >= self.broker_auth_init.try_fin:
                     raise Exception("The error in ANGEL-get_quote is", e)
 
     def place_order(self, username:str, transaction_type:str, price_:float, quantity:int, token:str = '', name:str = '', exchange:str = 'NSE', expiry:str = '', strike:str = '', optionType:str = '',  trigger:float = 0, product:str = '') -> str:
-        ''' Place an order in angel for the user session saved in broker_obj
+        ''' Place an order in angel for the user session saved in user_data
             All normal orders are supported: buy / sell / SL / target / carry-forward
             Give token or (name, exchange, expiry, strike, optionType) to identify the item for which the order is to be placed
 
@@ -209,11 +226,6 @@ class AngelTrade(BrokerTrade):
         try:
             user_data = self.broker_auth_init.red.get(username)
             user_data = self.broker_auth_init.get_data_structures(user_data)
-            broker_obj = SmartConnect(api_key=user_data['auth']['api_key'])
-            broker_obj.access_token = user_data['auth']['access_token']
-            broker_obj.feed_token = user_data['auth']['feed_token']
-            broker_obj.refresh_token = user_data['auth']['refresh_token']
-            broker_obj.userId = user_data['auth']['userId']
         except Exception as e:
             self.broker_auth_init.logger.error(username + ': The error in ANGEL-placeorder auth is ' + str(e))
             raise Exception("The error in ANGEL-placeorder auth is", e)
@@ -241,7 +253,17 @@ class AngelTrade(BrokerTrade):
                         "duration": "DAY", "price": str(self.broker_auth_init.round_to(price_)), "triggerprice": str(self.broker_auth_init.round_to(trigger)), "quantity": str(int(quantity))}
         while True:
             try:
-                order_id = broker_obj.placeOrder(orderparams)
+                headers = {
+                    'Authorization': 'Bearer ' + user_data['auth']['access_token'],
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-UserType': 'USER',
+                    'X-SourceID': 'WEB',
+                    'X-MACAddress': '00:00:00:00:00:00',
+                    'X-PrivateKey': user_data['auth']['api_key']
+                }
+                resp = requests.post(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/placeOrder', json=orderparams, headers=headers).json()
+                order_id = resp['data']['orderid']
                 time.sleep(2.5)
                 # try: df = self.broker_ord.orders(username) # check for order status
                 # except Exception as e: raise Exception('ATTENTION: The error in ANGEL-placeorder: fetching orderbook unsuccessful: unable to check the status', e)
@@ -265,15 +287,15 @@ class AngelTrade(BrokerTrade):
                 except Exception as e1:
                     self.broker_auth_init.logger.error(username + ': ATTENTION: The error in ANGEL-placeorder-error handling_2: ' + str(i) + ' ' + str(e1) + ' ' + str(e) + ' Retrying.....')
                     self.broker_auth_init.print_to_chat(username, 'ATTENTION: The error in ANGEL-placeorder-error handling_2: ' + str(i) + ' ' + str(e1) + ' ' + str(e) + ' Retrying.....')
-                self.broker_auth_init.logger.error(username + ': The error in ANGEL-placeorder is ' + str(e) + ' Retrying.....')
-                self.broker_auth_init.print_to_chat(username, 'The error in ANGEL-placeorder is ' + str(e) + ' Retrying.....')
+                self.broker_auth_init.logger.error(username + ': The error in ANGEL-placeorder is ' + str(e) + '. ' + str(resp['message']) + ' Retrying.....')
+                self.broker_auth_init.print_to_chat(username, 'The error in ANGEL-placeorder is ' + str(e) + '. ' + str(resp['message']) + ' Retrying.....')
                 time.sleep(1)
-                if i==5: broker_obj = self.broker_auth_init.login(user_data['file'])
+                if i==5: user_data = self.broker_auth_init.login(user_data['file'])
                 i=i+1
                 if i >= self.broker_auth_init.try_fin: raise Exception("The error in ANGEL-placeorder is", e)
 
     def modify_order(self, username:str, order_id:str,  price:float, quantity:Union[int, str] = '', trigger:float = 0) -> str:
-        ''' Modify only the price of a given order_id in angel for the user session saved in broker_obj.
+        ''' Modify only the price of a given order_id in angel for the user session saved in user_data.
             Should be only used when the order status is OPN / SLO / OPF.
             All orders are supported: buy / sell / SL / target / carry-forward.
             orders_df is used to get token, symbol, exchange used only in angel while modifing the order
@@ -299,11 +321,6 @@ class AngelTrade(BrokerTrade):
         try:
             user_data = self.broker_auth_init.red.get(username)
             user_data = self.broker_auth_init.get_data_structures(user_data)
-            broker_obj = SmartConnect(api_key=user_data['auth']['api_key'])
-            broker_obj.access_token = user_data['auth']['access_token']
-            broker_obj.feed_token = user_data['auth']['feed_token']
-            broker_obj.refresh_token = user_data['auth']['refresh_token']
-            broker_obj.userId = user_data['auth']['userId']
         except Exception as e:
             self.broker_auth_init.logger.error(username + ': The error in ANGEL-modifyorder auth is ' + str(e))
             raise Exception("The error in ANGEL-modifyorder auth is", e)
@@ -326,7 +343,17 @@ class AngelTrade(BrokerTrade):
                 "tradingsymbol":symbol, "symboltoken": str(token), "exchange": exchange}
         while True:
             try:
-                order_id = broker_obj.modifyOrder(orderparams)['data']['orderid']
+                headers = {
+                    'Authorization': 'Bearer ' + user_data['auth']['access_token'],
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-UserType': 'USER',
+                    'X-SourceID': 'WEB',
+                    'X-MACAddress': '00:00:00:00:00:00',
+                    'X-PrivateKey': user_data['auth']['api_key']
+                }
+                resp = requests.post(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/modifyOrder', json=orderparams, headers=headers).json()
+                order_id = resp['data']['orderid']
                 return str(order_id)
             except Exception as e:
                 time.sleep(1)
@@ -336,13 +363,13 @@ class AngelTrade(BrokerTrade):
                     self.broker_auth_init.logger.error(username + ': Order: ' + str(order_id) + ' can not be modified as the status is- ' + str(order.status.iloc[0]))
                     return str(order_id)
                 if order.status.iloc[0] == 'OPF': quantity = order.pendingQuantity.iloc[0]
-                if i==5: broker_obj = self.broker_auth_init.login(user_data['file'])
+                if i==5: user_data = self.broker_auth_init.login(user_data['file'])
                 i=i+1
-                self.broker_auth_init.logger.error(username + ': The error in ANGEL-modifyorder is ' + str(e) + ' Status ' + str(order.status.iloc[0]) + ' Retrying....')
+                self.broker_auth_init.logger.error(username + ': The error in ANGEL-modifyorder is ' + str(e) + '. ' + str(resp['message']) + ' Status ' + str(order.status.iloc[0]) + ' Retrying....')
                 if i >= self.broker_auth_init.try_fin: raise Exception("The error in ANGEL-modifyorder is", e)
 
     def cancel_order(self, username:str, order_id:str) -> str:
-        ''' Cancel a given order_id in angel for the user session saved in broker_obj.
+        ''' Cancel a given order_id in angel for the user session saved in user_data.
             Should be only used when the order status is OPN / SLO.
             All orders are supported: buy / sell / SL / target / carry-forward.
             orders_df is used to get variety used only in angel while canceling the order
@@ -360,11 +387,6 @@ class AngelTrade(BrokerTrade):
         try:
             user_data = self.broker_auth_init.red.get(username)
             user_data = self.broker_auth_init.get_data_structures(user_data)
-            broker_obj = SmartConnect(api_key=user_data['auth']['api_key'])
-            broker_obj.access_token = user_data['auth']['access_token']
-            broker_obj.feed_token = user_data['auth']['feed_token']
-            broker_obj.refresh_token = user_data['auth']['refresh_token']
-            broker_obj.userId = user_data['auth']['userId']
         except Exception as e:
             self.broker_auth_init.logger.error(username + ': The error in ANGEL-cancelorder auth is ' + str(e))
             raise Exception("The error in ANGEL-cancelorder auth is", e)
@@ -380,8 +402,18 @@ class AngelTrade(BrokerTrade):
             return str(order_id)
         while True:
             try:
-                order = broker_obj.cancelOrder(str(order_id), variety)
-                order_id = order['data']['orderid']
+                headers = {
+                    'Authorization': 'Bearer ' + user_data['auth']['access_token'],
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-UserType': 'USER',
+                    'X-SourceID': 'WEB',
+                    'X-MACAddress': '00:00:00:00:00:00',
+                    'X-PrivateKey': user_data['auth']['api_key']
+                }
+                cancel_data = {"variety": variety, "orderid": str(order_id)}
+                resp = requests.post(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/cancelOrder', json=cancel_data, headers=headers).json()
+                order_id = resp['data']['orderid']
                 return str(order_id)
             except Exception as e:
                 time.sleep(1)
@@ -390,7 +422,7 @@ class AngelTrade(BrokerTrade):
                 if order.status.iloc[0] not in ['OPN', 'SLO', 'OPF']: # print_logger("Rechecked Current Status of the Order:", order.status.iloc[0])
                     self.broker_auth_init.logger.error(username + ': Order: ' + str(order_id) + ' can not be cancelled as the status is- ' + str(order.status.iloc[0]))
                     return str(order_id)
-                if i==5: broker_obj = self.broker_auth_init.login(user_data['file'])
+                if i==5: user_data = self.broker_auth_init.login(user_data['file'])
                 i=i+1
-                self.broker_auth_init.logger.error(username + ': The error in ANGEL-cancelorder is ' + str(e) + ' Status ' + str(order.status.iloc[0]) + ' Retrying....')
+                self.broker_auth_init.logger.error(username + ': The error in ANGEL-cancelorder is ' + str(e) + '. ' + str(resp['message']) + ' Status ' + str(order.status.iloc[0]) + ' Retrying....')
                 if i >= self.broker_auth_init.try_fin: raise Exception("The error in ANGEL-cancelorder is", e)

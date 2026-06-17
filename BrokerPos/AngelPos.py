@@ -1,11 +1,13 @@
 from BrokerAuthInit import BrokerAuthInit
 from BrokerPos import BrokerPos
-from SmartApi import SmartConnect
 import pandas as pd
 import numpy as np
 import datetime
+import requests
 import time
 import os
+
+ANGEL_BASE_URL = 'https://apiconnect.angelone.in'
 
 class AngelPos(BrokerPos):
     def __init__(self, broker_auth_init:BrokerAuthInit) -> None:
@@ -30,11 +32,6 @@ class AngelPos(BrokerPos):
         try:
             user_data = self.broker_auth_init.red.get(username)
             user_data = self.broker_auth_init.get_data_structures(user_data)
-            broker_obj = SmartConnect(api_key=user_data['auth']['api_key'])
-            broker_obj.access_token = user_data['auth']['access_token']
-            broker_obj.feed_token = user_data['auth']['feed_token']
-            broker_obj.refresh_token = user_data['auth']['refresh_token']
-            broker_obj.userId = user_data['auth']['userId']
         except Exception as e:
             self.broker_auth_init.logger.error(username + ': The error in ANGEL-positions auth is ' + str(e))
             raise Exception("The error in ANGEL-positions auth is", e)
@@ -54,7 +51,17 @@ class AngelPos(BrokerPos):
         i = 0
         while True:
             try:
-                positions = pd.DataFrame(broker_obj.position()['data'])
+                headers = {
+                    'Authorization': 'Bearer ' + user_data['auth']['access_token'],
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-UserType': 'USER',
+                    'X-SourceID': 'WEB',
+                    'X-MACAddress': '00:00:00:00:00:00',
+                    'X-PrivateKey': user_data['auth']['api_key']
+                }
+                resp = requests.get(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/getPosition', headers=headers).json()
+                positions = pd.DataFrame(resp['data'])
                 if positions.shape[0] == 0:
                     df = pd.DataFrame(columns=['actualPNL', 'averageStockPrice', 'expiryDate', 'instrumentToken', 'lastPrice', 'netTrdQtyLot', 'optionType', 'item_name', 'strk'])
                     positions_df = df.copy()
@@ -108,7 +115,7 @@ class AngelPos(BrokerPos):
             except Exception as e:
                 self.broker_auth_init.logger.error(username + ': The error in ANGEL-positions is ' + str(e) + ' Retrying..... ' + str(i))
                 time.sleep(1)
-                if i==5: broker_obj = self.broker_auth_init.login(user_data['file'])
+                if i==5: user_data = self.broker_auth_init.login(user_data['file'])
                 i=i+1
                 if i >= self.broker_auth_init.try_fin:
                     raise Exception("The error in ANGEL-positions is", e)
