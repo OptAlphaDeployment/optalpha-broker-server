@@ -34,7 +34,7 @@ class KotakneoPortfo(BrokerPortfo):
         portfolio_df = self.get_portfolio_df(username)
 
         path_posord = '/app/BrokerData/PosOrd/' + str(datetime.datetime.today().date()) + '/'
-        if not os.path.isdir(path_posord): os.mkdir(path_posord)
+        if not os.path.isdir(path_posord): os.makedirs(path_posord, exist_ok=True)
         _path_ = path_posord + username + '_prt.pkl'
         try:
             lst_tm = datetime.datetime.fromtimestamp(os.path.getmtime(_path_))
