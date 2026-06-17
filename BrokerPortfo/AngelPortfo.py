@@ -56,7 +56,14 @@ class AngelPortfo(BrokerPortfo):
                     'X-MACAddress': '00:00:00:00:00:00',
                     'X-PrivateKey': user_data['auth']['api_key']
                 }
-                resp = requests.get(ANGEL_BASE_URL + '/rest/secure/angelbroking/portfolio/v1/getAllHolding', headers=headers).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                resp = requests.get(ANGEL_BASE_URL + '/rest/secure/angelbroking/portfolio/v1/getAllHolding', headers=headers, proxies=proxies_dict).json()
                 portfolio = pd.DataFrame(resp['data']['holdings'])
                 if portfolio.shape[0] == 0:
                     df = pd.DataFrame(columns=['averageStockPrice', 'instrumentToken', 'lastPrice', 'netTrdQtyLot', 'item_name'])

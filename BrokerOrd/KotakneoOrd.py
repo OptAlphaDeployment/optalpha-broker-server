@@ -61,7 +61,14 @@ class KotakneoOrd(BrokerOrd):
                     'neo-fin-key': 'neotradeapi'
                 }
 
-                orders = requests.get(user_data['auth']["base_url"] + f'/quick/user/orders', headers=headers).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                orders = requests.get(user_data['auth']["base_url"] + f'/quick/user/orders', headers=headers, proxies=proxies_dict).json()
                 if 'data' in list(orders.keys()): orders = pd.DataFrame(orders['data'])
                 else:
                 # if orders.shape[0] == 0:

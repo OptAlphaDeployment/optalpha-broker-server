@@ -52,7 +52,14 @@ class KotakneoPortfo(BrokerPortfo):
                     'neo-fin-key': 'neotradeapi'
                 }
 
-                portfolio = requests.get(user_data['auth']["base_url"] + f'/portfolio/v1/holdings', headers=headers).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                portfolio = requests.get(user_data['auth']["base_url"] + f'/portfolio/v1/holdings', headers=headers, proxies=proxies_dict).json()
                 if 'data' in list(portfolio.keys()): portfolio = pd.DataFrame(portfolio['data'])
                 else:
                 # if portfolio.shape[0] == 0:

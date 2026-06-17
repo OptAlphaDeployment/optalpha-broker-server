@@ -41,7 +41,14 @@ class AngelTrade(BrokerTrade):
                     'X-MACAddress': '00:00:00:00:00:00',
                     'X-PrivateKey': user_data['auth']['api_key']
                 }
-                resp = requests.get(ANGEL_BASE_URL + '/rest/secure/angelbroking/user/v1/getRMS', headers=headers).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                resp = requests.get(ANGEL_BASE_URL + '/rest/secure/angelbroking/user/v1/getRMS', headers=headers, proxies=proxies_dict).json()
                 return float(resp['data']['availablecash'])
             except Exception as e:
                 self.broker_auth_init.logger.error(username + ': The error in ANGEL-get_available_cash is ' + str(e) + ' Retrying..... ' + str(i))
@@ -109,7 +116,14 @@ class AngelTrade(BrokerTrade):
     #                         }
     #                     ]
     #                 }
-    #             resp = requests.post('https://apiconnect.angelone.in/rest/secure/angelbroking/margin/v1/batch', json=margin_data, headers=headers).json()
+    #             proxy_url = user_data['file'].get("proxy_url")
+    #             proxies_dict = None
+    #             if proxy_url:
+    #                 proxies_dict = {
+    #                     "http": proxy_url,
+    #                     "https": proxy_url
+    #                 }
+    #             resp = requests.post('https://apiconnect.angelone.in/rest/secure/angelbroking/margin/v1/batch', json=margin_data, headers=headers, proxies=proxies_dict).json()
 
     #             return float(resp['data']['totalMarginRequired'])
     #         except Exception as e:
@@ -172,7 +186,14 @@ class AngelTrade(BrokerTrade):
                     'X-PrivateKey': user_data['auth']['api_key']
                 }
                 ltp_data = {"exchange": exchange, "tradingsymbol": symbol, "symboltoken": str(token)}
-                resp = requests.post(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/getLtpData', json=ltp_data, headers=headers).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                resp = requests.post(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/getLtpData', json=ltp_data, headers=headers, proxies=proxies_dict).json()
                 ltp_ = resp['data']['ltp']
                 open_ = resp['data']['open']
                 data = pd.DataFrame({'ltp':ltp_,  'open_price':open_, 'BD_last_traded_time':''}, index=[0])
@@ -262,7 +283,14 @@ class AngelTrade(BrokerTrade):
                     'X-MACAddress': '00:00:00:00:00:00',
                     'X-PrivateKey': user_data['auth']['api_key']
                 }
-                resp = requests.post(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/placeOrder', json=orderparams, headers=headers).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                resp = requests.post(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/placeOrder', json=orderparams, headers=headers, proxies=proxies_dict).json()
                 order_id = resp['data']['orderid']
                 time.sleep(2.5)
                 # try: df = self.broker_ord.orders(username) # check for order status
@@ -352,7 +380,14 @@ class AngelTrade(BrokerTrade):
                     'X-MACAddress': '00:00:00:00:00:00',
                     'X-PrivateKey': user_data['auth']['api_key']
                 }
-                resp = requests.post(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/modifyOrder', json=orderparams, headers=headers).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                resp = requests.post(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/modifyOrder', json=orderparams, headers=headers, proxies=proxies_dict).json()
                 order_id = resp['data']['orderid']
                 return str(order_id)
             except Exception as e:
@@ -412,7 +447,14 @@ class AngelTrade(BrokerTrade):
                     'X-PrivateKey': user_data['auth']['api_key']
                 }
                 cancel_data = {"variety": variety, "orderid": str(order_id)}
-                resp = requests.post(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/cancelOrder', json=cancel_data, headers=headers).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                resp = requests.post(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/cancelOrder', json=cancel_data, headers=headers, proxies=proxies_dict).json()
                 order_id = resp['data']['orderid']
                 return str(order_id)
             except Exception as e:

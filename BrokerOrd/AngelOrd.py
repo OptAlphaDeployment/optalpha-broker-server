@@ -68,7 +68,14 @@ class AngelOrd(BrokerOrd):
                     'X-MACAddress': '00:00:00:00:00:00',
                     'X-PrivateKey': user_data['auth']['api_key']
                 }
-                resp = requests.get(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/getOrderBook', headers=headers).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                resp = requests.get(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/getOrderBook', headers=headers, proxies=proxies_dict).json()
                 orders = pd.DataFrame(resp['data'])
                 if orders.shape[0] == 0:
                     df = pd.DataFrame(columns=['orderId', 'orderQuantity', 'orderTimestamp', 'pendingQuantity', 'price', 'status', 'instrumentToken', 'item_name', 'exp', 'strk', 'optionType', 'transactionType'])

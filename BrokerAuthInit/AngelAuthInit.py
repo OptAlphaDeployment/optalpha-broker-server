@@ -45,7 +45,14 @@ class AngelAuthInit(BrokerAuthInit):
                     "password": file["pin"],
                     "totp": str(totp.now())
                 }
-                resp = requests.post(ANGEL_BASE_URL + '/rest/auth/angelbroking/user/v1/loginByPassword', json=data, headers=headers).json()
+                proxy_url = file.get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                resp = requests.post(ANGEL_BASE_URL + '/rest/auth/angelbroking/user/v1/loginByPassword', json=data, headers=headers, proxies=proxies_dict).json()
 
                 if not resp.get('status'):
                     raise Exception(resp.get('message', 'Login failed'))

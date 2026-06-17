@@ -51,7 +51,14 @@ class KotakneoTrade(BrokerTrade):
                 cash_data = urllib.parse.quote(cash_data)
                 cash_data = f"jData={cash_data}"
 
-                cash = requests.post(user_data['auth']["base_url"] + f'/quick/user/check-margin', headers=headers, data=cash_data).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                cash = requests.post(user_data['auth']["base_url"] + f'/quick/user/check-margin', headers=headers, data=cash_data, proxies=proxies_dict).json()
                 return float(cash['avlCash'])
             except Exception as e:
                 self.broker_auth_init.logger.error(username + ': The error in KOTAKNEO-get_available_cash is ' + str(e) + ' Retrying..... ' + str(i))
@@ -114,8 +121,15 @@ class KotakneoTrade(BrokerTrade):
     #             cash_data = json.dumps(cash_data)
     #             cash_data = urllib.parse.quote(cash_data)
     #             cash_data = f"jData={cash_data}"
+    #             proxy_url = user_data['file'].get("proxy_url")
+    #             proxies_dict = None
+    #             if proxy_url:
+    #                 proxies_dict = {
+    #                     "http": proxy_url,
+    #                     "https": proxy_url
+    #                 }
 
-    #             cash = requests.post(user_data['auth']["base_url"] + f'/quick/user/check-margin', headers=headers, data=cash_data).json()
+    #             cash = requests.post(user_data['auth']["base_url"] + f'/quick/user/check-margin', headers=headers, data=cash_data, proxies=proxies_dict).json()
     #             return float(cash['ordMrgn'])
     #         except Exception as e:
     #             self.broker_auth_init.logger.error(username + ': The error in KOTAKNEO-get_required_margin is ' + str(e) + ' Retrying..... ' + str(i))
@@ -172,7 +186,14 @@ class KotakneoTrade(BrokerTrade):
                 headers = {
                     'Authorization': user_data['file']['token']
                 }
-                ltps = requests.get(user_data['auth']["base_url"] + f'/script-details/1.0/quotes/neosymbol/{("nse_cm" if _exp_ == "" else "nse_fo") + "%7C" + str(token_)}/all', headers=headers).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                ltps = requests.get(user_data['auth']["base_url"] + f'/script-details/1.0/quotes/neosymbol/{("nse_cm" if _exp_ == "" else "nse_fo") + "%7C" + str(token_)}/all', headers=headers, proxies=proxies_dict).json()
 
                 data = pd.DataFrame({'ltp':ltps[0]['ltp'], 'open_price':ltps[0]['ohlc']['open'], 'BD_last_traded_time':ltps[0]['lstup_time']}, index=[0])
                 return data
@@ -269,7 +290,14 @@ class KotakneoTrade(BrokerTrade):
                     'sid': user_data['auth']['sid'],
                     'neo-fin-key': 'neotradeapi'
                 }
-                _order_ = requests.post(user_data['auth']["base_url"] + f'/quick/order/rule/ms/place', headers=headers, data=place_data).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                _order_ = requests.post(user_data['auth']["base_url"] + f'/quick/order/rule/ms/place', headers=headers, data=place_data, proxies=proxies_dict).json()
 
                 order_id = _order_['nOrdNo']
                 time.sleep(2.5)
@@ -376,7 +404,14 @@ class KotakneoTrade(BrokerTrade):
                     'sid': user_data['auth']['sid'],
                     'neo-fin-key': 'neotradeapi'
                 }
-                _order_ = requests.post(user_data['auth']["base_url"] + f'/quick/order/vr/modify', headers=headers, data=modify_data).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                _order_ = requests.post(user_data['auth']["base_url"] + f'/quick/order/vr/modify', headers=headers, data=modify_data, proxies=proxies_dict).json()
                 order_id = _order_['nOrdNo']
                 return str(order_id)
             except Exception as e:
@@ -439,7 +474,14 @@ class KotakneoTrade(BrokerTrade):
                     'sid': user_data['auth']['sid'],
                     'neo-fin-key': 'neotradeapi'
                 }
-                _order_ = requests.post(user_data['auth']["base_url"] + f'/quick/order/cancel', headers=headers, data=cancel_data).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                _order_ = requests.post(user_data['auth']["base_url"] + f'/quick/order/cancel', headers=headers, data=cancel_data, proxies=proxies_dict).json()
                 try: order_id = _order_['nOrdNo']
                 except: order_id = _order_['result']
                 return str(order_id)

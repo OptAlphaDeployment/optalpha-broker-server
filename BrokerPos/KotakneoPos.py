@@ -55,7 +55,14 @@ class KotakneoPos(BrokerPos):
                     'neo-fin-key': 'neotradeapi'
                 }
 
-                positions = requests.get(user_data['auth']["base_url"] + f'/quick/user/positions', headers=headers).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                positions = requests.get(user_data['auth']["base_url"] + f'/quick/user/positions', headers=headers, proxies=proxies_dict).json()
                 if 'data' in list(positions.keys()): positions = pd.DataFrame(positions['data'])
                 else:
                 # if positions.shape[0] == 0:
@@ -77,7 +84,7 @@ class KotakneoPos(BrokerPos):
                 headers = {
                     'Authorization': user_data['file']['token']
                 }
-                ltps = requests.get(user_data['auth']["base_url"] + f'/script-details/1.0/quotes/neosymbol/{pd.Series(["%2C".join(positions.exSeg + "%7C" + positions.tok.astype(str))]).iloc[0]}/scrip_details', headers=headers).json()
+                ltps = requests.get(user_data['auth']["base_url"] + f'/script-details/1.0/quotes/neosymbol/{pd.Series(["%2C".join(positions.exSeg + "%7C" + positions.tok.astype(str))]).iloc[0]}/scrip_details', headers=headers, proxies=proxies_dict).json()
                 ltps = pd.DataFrame(ltps)[['exchange_token', 'ltp']]
                 ltps.columns = ['tok', 'lastPrice']
 

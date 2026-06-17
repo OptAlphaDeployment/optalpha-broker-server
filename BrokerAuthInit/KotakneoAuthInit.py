@@ -39,7 +39,14 @@ class KotakneoAuthInit(BrokerAuthInit):
                     'Authorization': file["token"],
                     'neo-fin-key': 'neotradeapi'
                 }
-                info_1 = requests.post('https://mis.kotaksecurities.com/login/1.0/tradeApiLogin', json=data, headers=headers).json()
+                proxy_url = file.get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                info_1 = requests.post('https://mis.kotaksecurities.com/login/1.0/tradeApiLogin', json=data, headers=headers, proxies=proxies_dict).json()
                 auth = info_1['data']['token']
                 sid = info_1['data']['sid']
 
@@ -53,7 +60,7 @@ class KotakneoAuthInit(BrokerAuthInit):
                     'neo-fin-key': 'neotradeapi'
                 }
 
-                info_2 = requests.post('https://mis.kotaksecurities.com/login/1.0/tradeApiValidate', json=data, headers=headers).json()
+                info_2 = requests.post('https://mis.kotaksecurities.com/login/1.0/tradeApiValidate', json=data, headers=headers, proxies=proxies_dict).json()
 
                 if verbose: self.logger.info('KOTAKNEO Login Successsful: ' + info_2['data']['greetingName'])
 

@@ -60,7 +60,14 @@ class AngelPos(BrokerPos):
                     'X-MACAddress': '00:00:00:00:00:00',
                     'X-PrivateKey': user_data['auth']['api_key']
                 }
-                resp = requests.get(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/getPosition', headers=headers).json()
+                proxy_url = user_data['file'].get("proxy_url")
+                proxies_dict = None
+                if proxy_url:
+                    proxies_dict = {
+                        "http": proxy_url,
+                        "https": proxy_url
+                    }
+                resp = requests.get(ANGEL_BASE_URL + '/rest/secure/angelbroking/order/v1/getPosition', headers=headers, proxies=proxies_dict).json()
                 positions = pd.DataFrame(resp['data'])
                 if positions.shape[0] == 0:
                     df = pd.DataFrame(columns=['actualPNL', 'averageStockPrice', 'expiryDate', 'instrumentToken', 'lastPrice', 'netTrdQtyLot', 'optionType', 'item_name', 'strk'])
