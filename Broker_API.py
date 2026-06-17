@@ -24,12 +24,6 @@ from KotakneoPos import KotakneoPos
 from KotakneoPortfo import KotakneoPortfo
 from KotakneoTrade import KotakneoTrade
 
-from ShoonyaAuthInit import ShoonyaAuthInit
-from ShoonyaOrd import ShoonyaOrd
-from ShoonyaPos import ShoonyaPos
-from ShoonyaPortfo import ShoonyaPortfo
-from ShoonyaTrade import ShoonyaTrade
-
 warnings.filterwarnings('ignore')
 
 AngelAuthInit.list_update()
@@ -46,20 +40,12 @@ kpos = KotakneoPos(kai)
 kprt = KotakneoPortfo(kai)
 ktrade = KotakneoTrade(kai, kord)
 
-sai = ShoonyaAuthInit()
-sord = ShoonyaOrd(sai)
-spos = ShoonyaPos(sai)
-sprt = ShoonyaPortfo(sai)
-strade = ShoonyaTrade(sai, sord)
-
 try:
     aai.update_token_files()
     kai.update_token_files()
-    sai.update_token_files()
 
     _ = aai.get_tokens_df_from_files()
     _ = kai.get_tokens_df_from_files()
-    _ = sai.get_tokens_df_from_files()
 
     print('Successfully Initialized')
 except Exception as e:
@@ -98,8 +84,6 @@ def login_api(login_args: dict = Body(...)):
             resp = aai.login(login_args['file'])
         if broker == 'kotakneo':
             resp = kai.login(login_args['file'])
-        if broker == 'shoonya':
-            resp = sai.login(login_args['file'])
         if resp == 0: raise Exception('Login Error')
         else: return {'error': ''}
     except Exception as e:
@@ -118,10 +102,6 @@ def get_token_api(get_token_args: dict = Body(...)):
             token = kai.get_token(name=get_token_args['name'], exchange=get_token_args['exchange'], 
                                 expiry=get_token_args['expiry'], strike=get_token_args['strike'], 
                                 optionType=get_token_args['optionType'])
-        if broker == 'shoonya':
-            token = sai.get_token(name=get_token_args['name'], exchange=get_token_args['exchange'], 
-                                expiry=get_token_args['expiry'], strike=get_token_args['strike'], 
-                                optionType=get_token_args['optionType'])
         return {'token':token, 'error': ''}
     except Exception as e:
         print(str(e))
@@ -135,8 +115,6 @@ def get_name_api(get_name_args: dict = Body(...)):
             name, expiry, strike, optionType, lots = aai.get_name(token=get_name_args['token'])
         if broker == 'kotakneo':
             name, expiry, strike, optionType, lots = kai.get_name(token=get_name_args['token'])
-        if broker == 'shoonya':
-            name, expiry, strike, optionType, lots = sai.get_name(token=get_name_args['token'])
         data = {
             'name': name,
             'expiry': expiry,
@@ -157,8 +135,6 @@ def orders_api(orders_args: dict = Body(...)):
             orders = aord.orders(orders_args['username'])
         if broker == 'kotakneo':
             orders = kord.orders(orders_args['username'])
-        if broker == 'shoonya':
-            orders = sord.orders(orders_args['username'])
         orders.replace([np.inf, -np.inf, np.nan], None, inplace=True)
         data = orders.to_dict()
         return {'data':data, 'error': ''}
@@ -183,8 +159,6 @@ def positions_api(positions_args: dict = Body(...)):
             positions = apos.positions(positions_args['username'])
         if broker == 'kotakneo':
             positions = kpos.positions(positions_args['username'])
-        if broker == 'shoonya':
-            positions = spos.positions(positions_args['username'])
         positions.replace([np.inf, -np.inf, np.nan], None, inplace=True)
         data = positions.to_dict()
         return {'data':data, 'error': ''}
@@ -209,8 +183,6 @@ def portfolio_api(portfolio_args: dict = Body(...)):
             portfolio = aprt.portfolio(portfolio_args['username'])
         if broker == 'kotakneo':
             portfolio = kprt.portfolio(portfolio_args['username'])
-        if broker == 'shoonya':
-            portfolio = sprt.portfolio(portfolio_args['username'])
         portfolio.replace([np.inf, -np.inf, np.nan], None, inplace=True)
         data = portfolio.to_dict()
         return {'data':data, 'error': ''}
@@ -226,8 +198,6 @@ def get_available_cash_api(get_available_cash_args: dict = Body(...)):
             available_cash = atrade.get_available_cash(username=get_available_cash_args['username'])
         if broker == 'kotakneo':
             available_cash = ktrade.get_available_cash(username=get_available_cash_args['username'])
-        if broker == 'shoonya':
-            available_cash = strade.get_available_cash(username=get_available_cash_args['username'])
         return {'available_cash':available_cash, 'error': ''}
     except Exception as e:
         print(str(e))
@@ -264,11 +234,6 @@ def get_quote_api(get_quote_args: dict = Body(...)):
                                 name=get_quote_args['name'], exchange=get_quote_args['exchange'], 
                                 expiry=get_quote_args['expiry'], strike=get_quote_args['strike'], 
                                 optionType=get_quote_args['optionType'])
-        if broker == 'shoonya':
-            quote = strade.get_quote(username=get_quote_args['username'], token=get_quote_args['token'], 
-                                name=get_quote_args['name'], exchange=get_quote_args['exchange'], 
-                                expiry=get_quote_args['expiry'], strike=get_quote_args['strike'], 
-                                optionType=get_quote_args['optionType'])
         quote.replace([np.inf, -np.inf, np.nan], None, inplace=True)
         data = quote.to_dict()
         return {'data':data, 'error': ''}
@@ -294,13 +259,6 @@ def place_order_api(place_order_args: dict = Body(...)):
                                 exchange=place_order_args['exchange'], expiry=place_order_args['expiry'],
                                 strike=place_order_args['strike'], optionType=place_order_args['optionType'],
                                 trigger=place_order_args['trigger'], product=place_order_args['product'])
-        if broker == 'shoonya':
-            orderid = strade.place_order(username=place_order_args['username'], transaction_type=place_order_args['transaction_type'], 
-                                price_=place_order_args['price_'], quantity=place_order_args['quantity'], 
-                                token=place_order_args['token'], name=place_order_args['name'], 
-                                exchange=place_order_args['exchange'], expiry=place_order_args['expiry'],
-                                strike=place_order_args['strike'], optionType=place_order_args['optionType'],
-                                trigger=place_order_args['trigger'], product=place_order_args['product'])
         return {'orderid':orderid, 'error': ''}
     except Exception as e:
         print(str(e))
@@ -318,10 +276,6 @@ def modify_order_api(modify_order_args: dict = Body(...)):
             orderid = ktrade.modify_order(username=modify_order_args['username'], order_id=modify_order_args['order_id'], 
                                 price=modify_order_args['price'], quantity=modify_order_args['quantity'], 
                                 trigger=modify_order_args['trigger'])
-        if broker == 'shoonya':
-            orderid = strade.modify_order(username=modify_order_args['username'], order_id=modify_order_args['order_id'], 
-                                price=modify_order_args['price'], quantity=modify_order_args['quantity'], 
-                                trigger=modify_order_args['trigger'])
         return {'orderid':orderid, 'error': ''}
     except Exception as e:
         print(str(e))
@@ -335,8 +289,6 @@ def cancel_order_api(cancel_order_args: dict = Body(...)):
             orderid = atrade.cancel_order(username=cancel_order_args['username'], order_id=cancel_order_args['order_id'])
         if broker == 'kotakneo':
             orderid = ktrade.cancel_order(username=cancel_order_args['username'], order_id=cancel_order_args['order_id'])
-        if broker == 'shoonya':
-            orderid = strade.cancel_order(username=cancel_order_args['username'], order_id=cancel_order_args['order_id'])
         return {'orderid':orderid, 'error': ''}
     except Exception as e:
         print(str(e))

@@ -2,7 +2,7 @@
 
 A **FastAPI-based multi-broker trading server** that provides a unified REST API for interacting with multiple Indian stock brokers. The server abstracts away broker-specific implementations, enabling clients to place orders, view positions, manage portfolios, and more through a single consistent interface.
 
-**Version:** 0.1 &nbsp;|&nbsp; **Python:** 3.9 &nbsp;|&nbsp; **Framework:** FastAPI + Uvicorn
+**Version:** 1.0 &nbsp;|&nbsp; **Python:** 3.9 &nbsp;|&nbsp; **Framework:** FastAPI + Uvicorn
 
 ---
 
@@ -12,7 +12,6 @@ A **FastAPI-based multi-broker trading server** that provides a unified REST API
 |--------|------|--------|-----------|-----------|---------|
 | **Angel One** | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Kotak Neo** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Shoonya** (Finvasia) | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ---
 
@@ -24,12 +23,10 @@ The project follows a **modular, abstract-base-class** design where each functio
 BrokerAuthInit (ABC)          BrokerOrd (ABC)
 ├── AngelAuthInit              ├── AngelOrd
 ├── KotakneoAuthInit           ├── KotakneoOrd
-└── ShoonyaAuthInit            └── ShoonyaOrd
 
 BrokerPos (ABC)               BrokerPortfo (ABC)          BrokerTrade (ABC)
 ├── AngelPos                   ├── AngelPortfo              ├── AngelTrade
 ├── KotakneoPos                ├── KotakneoPortfo           ├── KotakneoTrade
-└── ShoonyaPos                 └── ShoonyaPortfo            └── ShoonyaTrade
 ```
 
 ### Infrastructure
@@ -52,27 +49,22 @@ OptAlphaBrokerServer/
 │   ├── BrokerAuthInit.py      #   Base class (ABC)
 │   ├── AngelAuthInit.py       #   Angel One implementation
 │   ├── KotakneoAuthInit.py    #   Kotak Neo implementation
-│   └── ShoonyaAuthInit.py     #   Shoonya implementation
 ├── BrokerOrd/                 # Order management
 │   ├── BrokerOrd.py           #   Base class (ABC)
 │   ├── AngelOrd.py
 │   ├── KotakneoOrd.py
-│   └── ShoonyaOrd.py
 ├── BrokerPos/                 # Position tracking
 │   ├── BrokerPos.py           #   Base class (ABC)
 │   ├── AngelPos.py
 │   ├── KotakneoPos.py
-│   └── ShoonyaPos.py
 ├── BrokerPortfo/              # Portfolio management
 │   ├── BrokerPortfo.py        #   Base class (ABC)
 │   ├── AngelPortfo.py
 │   ├── KotakneoPortfo.py
-│   └── ShoonyaPortfo.py
 ├── BrokerTrade/               # Trading operations (place/modify/cancel)
 │   ├── BrokerTrade.py         #   Base class (ABC)
 │   ├── AngelTrade.py
 │   ├── KotakneoTrade.py
-│   └── ShoonyaTrade.py
 ├── BrokerData/                # Runtime data
 │   ├── Logs/                  #   Daily log files
 │   ├── PosOrd/                #   Position/order snapshots
@@ -84,7 +76,6 @@ OptAlphaBrokerServer/
 ├── Dockerfile_test            # Test/dev image (Jupyter on port 8888)
 ├── requirements.txt           # Python dependencies
 ├── version.txt                # Semver-style version tracker
-└── NorenRestApi-0.0.30-*.whl  # Shoonya/NorenRestApi wheel
 ```
 
 ---
@@ -175,8 +166,6 @@ The app also expects a **Redis** instance at `redis-service:6379`.
 
 ```bash
 # Install dependencies
-pip install NorenRestApi-0.0.30-py2.py3-none-any.whl
-pip install git+https://github.com/Kotak-Neo/kotak-neo-api.git#egg=neo_api_client
 pip install -r requirements.txt
 
 # Set environment variables (see table above)
@@ -229,8 +218,6 @@ A **GitHub Actions** workflow (`.github/workflows/docker-image.yml`) automates t
 | `redis` | Session & data caching |
 | `psycopg2-binary` / `SQLAlchemy` | PostgreSQL connectivity |
 | `pandas` / `numpy` | Data manipulation |
-| `neo_api_client` | Kotak Neo broker SDK |
-| `NorenRestApi` | Shoonya (Finvasia) broker SDK |
 | `python-telegram-bot` | Telegram notifications |
 | `pyotp` | TOTP-based two-factor auth |
 | `websockets` | Real-time data feeds |
