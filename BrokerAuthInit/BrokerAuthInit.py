@@ -204,9 +204,12 @@ class BrokerAuthInit(ABC):
             all = list(set(all))
             all.sort()
             pd.DataFrame(all, columns=['name']).to_csv('/app/BrokerData/Stocks/all.csv', index=False)
+        except Exception as e:
+            print('ATTENTION: unable to update all list. Error is ' + str(e))
 
+        try:
             res = requests.get("https://api.kite.trade/instruments.json")
             kite_tokens = pd.read_json(io.StringIO(res.text), lines=True)
             kite_tokens.to_csv('/app/Tokens/kite_tokens.csv', index=False)
         except Exception as e:
-            print('ATTENTION: unable to get all list. Error is ' + str(e))
+            print('ATTENTION: unable to get kite_tokens. Error is ' + str(e))
