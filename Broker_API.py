@@ -5,6 +5,7 @@ import numpy as np
 import warnings
 import json
 
+import os
 import sys
 sys.path.insert(0, '/app/BrokerAuthInit/')
 sys.path.insert(1, '/app/BrokerOrd/')
@@ -25,6 +26,15 @@ from KotakneoPortfo import KotakneoPortfo
 from KotakneoTrade import KotakneoTrade
 
 warnings.filterwarnings('ignore')
+
+path_logs = '/app/BrokerData/Logs/'
+if not os.path.isdir(path_logs): os.makedirs(path_logs, exist_ok=True)
+
+path_posord = '/app/BrokerData/PosOrd/'
+if not os.path.isdir(path_posord): os.makedirs(path_posord, exist_ok=True)
+
+path_stocks = '/app/BrokerData/Stocks/'
+if not os.path.isdir(path_stocks): os.makedirs(path_stocks, exist_ok=True)
 
 AngelAuthInit.list_update()
 
